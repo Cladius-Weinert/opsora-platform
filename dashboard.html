@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Opsora AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10; --bg2: #101318; --bg3: #181b24; --surface: #1e2230; --border: #2e3450;
+  --text: #e8edf5; --text2: #94a3b8; --text3: #5c6b8a;
+  --accent: #00f0ff; --green: #22c55e; --red: #ef4444; --orange: #f97316;
+  --gradient: linear-gradient(135deg, #00f0ff, #7c3aed, #f59e0b);
+  --font-display: 'Syne', sans-serif; --font-mono: 'DM Mono', monospace; --font-body: 'Inter', sans-serif;
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-body); background: var(--bg); color: var(--text);
+  padding: 24px; min-height: 100vh;
+}
+.top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.top-bar h1 { font-family: var(--font-display); font-size: 1.5rem; }
+.top-bar .nav-links { display: flex; gap: 16px; }
+.top-bar .nav-links a { color: var(--text2); font-size: 0.88rem; text-decoration: none; }
+.top-bar .nav-links a:hover { color: var(--accent); }
+.grid { display: grid; gap: 20px; }
+.stats-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 24px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.stat-card:hover { border-color: var(--accent); }
+.stat-card .label { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+.stat-card .value { font-size: 2rem; font-family: var(--font-display); font-weight: 700; }
+.stat-card .change { font-size: 0.78rem; margin-top: 6px; }
+.stat-card .change.up { color: var(--green); }
+.stat-card .change.down { color: var(--red); }
+.chart-grid { grid-template-columns: 1fr 1fr; margin-bottom: 24px; }
+@media (max-width: 768px) { .chart-grid { grid-template-columns: 1fr; } }
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.chart-card h3 { font-family: var(--font-display); font-size: 0.95rem; margin-bottom: 16px; }
+.bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 160px; }
+.bar-chart .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bar-chart .bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 4px; background: linear-gradient(180deg, #00f0ff, #7c3aed); }
+.bar-chart .bar-label { font-size: 0.65rem; color: var(--text3); font-family: var(--font-mono); }
+.table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; grid-column: 1 / -1; }
+.table-card h3 { font-family: var(--font-display); font-size: 0.95rem; margin-bottom: 16px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text3); padding: 8px 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
+td { padding: 12px; font-size: 0.85rem; border-bottom: 1px solid var(--border); color: var(--text2); }
+td:first-child { color: var(--text); font-weight: 500; }
+.status-badge { display: inline-block; padding: 2px 10px; border-radius: 100px; font-size: 0.7rem; font-family: var(--font-mono); }
+.status-up { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+.status-down { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+.status-warn { background: rgba(249,115,22,0.1); color: var(--orange); border: 1px solid rgba(249,115,22,0.2); }
+</style>
+</head>
+<body>
+<div class="top-bar">
+  <h1>📊 Opsora <span style="color:var(--accent)">Dashboard</span></h1>
+  <div class="nav-links"><a href="index.html">Home</a><a href="agent.html">Chat</a><a href="#">Dashboard</a></div>
+</div>
+<div class="grid stats-grid" id="statsGrid">
+  <div class="stat-card"><div class="label">Total Requests</div><div class="value" id="stat1">0</div><div class="change up">↑ 12.5%</div></div>
+  <div class="stat-card"><div class="label">Tokens Processed</div><div class="value" id="stat2">0</div><div class="change up">↑ 8.3%</div></div>
+  <div class="stat-card"><div class="label">Avg Latency</div><div class="value" id="stat3">0ms</div><div class="change down">↓ 5.2%</div></div>
+  <div class="stat-card"><div class="label">Active Users</div><div class="value" id="stat4">0</div><div class="change up">↑ 18.7%</div></div>
+  <div class="stat-card"><div class="label">Total Cost</div><div class="value" id="stat5">$0.00</div><div class="change up">↑ 15.1%</div></div>
+  <div class="stat-card"><div class="label">Uptime</div><div class="value" id="stat6">99.9%</div><div class="change up">✓ All operational</div></div>
+</div>
+<div class="grid chart-grid">
+  <div class="chart-card"><h3>Daily Requests (Last 7 Days)</h3><div class="bar-chart" id="dailyChart"></div></div>
+  <div class="chart-card">
+    <h3>Provider Health</h3>
+    <table>
+      <tr><th>Provider</th><th>Status</th><th>Latency</th><th>Uptime</th></tr>
+      <tr><td>NVIDIA NIM</td><td><span class="status-badge status-up">Operational</span></td><td>187ms</td><td>99.97%</td></tr>
+      <tr><td>Alibaba DashScope</td><td><span class="status-badge status-up">Operational</span></td><td>234ms</td><td>99.91%</td></tr>
+      <tr><td>OpenAI</td><td><span class="status-badge status-up">Operational</span></td><td>312ms</td><td>99.88%</td></tr>
+      <tr><td>AWS Bedrock</td><td><span class="status-badge status-warn">Degraded</span></td><td>456ms</td><td>98.52%</td></tr>
+      <tr><td>Meta Llama</td><td><span class="status-badge status-up">Operational</span></td><td>145ms</td><td>99.99%</td></tr>
+    </table>
+  </div>
+</div>
+<script>
+function animate(el, target, suffix, isFloat, isDollar) {
+  let c = 0; const s = target / 60;
+  const i = setInterval(() => { c += s; if (c >= target) { c = target; clearInterval(i); }
+    if (isDollar) el.textContent = '$' + c.toFixed(2);
+    else if (isFloat) el.textContent = c.toFixed(1) + suffix;
+    else el.textContent = Math.floor(c) + suffix;
+  }, 25);
+}
+animate(document.getElementById('stat1'), 12847, '');
+animate(document.getElementById('stat2'), 3.2, 'M', true);
+animate(document.getElementById('stat3'), 187, 'ms');
+animate(document.getElementById('stat4'), 342, '');
+animate(document.getElementById('stat5'), 42.50, '', false, true);
+const dailyData = [4200, 5800, 4900, 7200, 8100, 6800, 9500];
+const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const max = Math.max(...dailyData);
+const container = document.getElementById('dailyChart');
+dailyData.forEach((v, i) => {
+  const g = document.createElement('div'); g.className = 'bar-group';
+  const b = document.createElement('div'); b.className = 'bar';
+  setTimeout(() => { b.style.height = ((v/max)*100) + '%'; }, 100*i);
+  const l = document.createElement('div'); l.className = 'bar-label'; l.textContent = days[i];
+  g.appendChild(b); g.appendChild(l); container.appendChild(g);
+});
+</script>
+</body>
+</html>

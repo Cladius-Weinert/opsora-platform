@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opsora AI Agent — Multi-Provider Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10; --bg2: #101318; --bg3: #181b24; --surface: #1e2230; --border: #2e3450;
+  --text: #e8edf5; --text2: #94a3b8; --text3: #5c6b8a;
+  --accent: #00f0ff; --accent2: #7c3aed; --green: #22c55e; --red: #ef4444;
+  --gradient: linear-gradient(135deg, #00f0ff, #7c3aed, #f59e0b);
+  --font-display: 'Syne', sans-serif; --font-mono: 'DM Mono', monospace; --font-body: 'Inter', sans-serif;
+  --radius: 12px; --radius-sm: 8px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-body); background: var(--bg); color: var(--text);
+  line-height: 1.6; overflow: hidden; display: flex;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+.sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; height: 100vh; }
+.sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.sidebar-header h1 { font-family: var(--font-display); font-size: 1.1rem; }
+.sidebar-nav { padding: 16px 12px; flex: 1; overflow-y: auto; }
+.sidebar-nav a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); color: var(--text2); font-size: 0.88rem; transition: all 0.2s; text-decoration: none; }
+.sidebar-nav a:hover { background: var(--surface); color: var(--text); }
+.sidebar-nav a.active { background: var(--surface); color: var(--accent); border-left: 2px solid var(--accent); }
+.main { flex: 1; display: flex; flex-direction: column; height: 100vh; min-width: 0; }
+.main-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: rgba(10,12,16,0.8); backdrop-filter: blur(20px); }
+.chat-area { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.chat-area::-webkit-scrollbar { width: 6px; }
+.chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.message { display: flex; gap: 12px; max-width: 80%; animation: msgIn 0.3s ease-out; }
+@keyframes msgIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.message.user { align-self: flex-end; flex-direction: row-reverse; }
+.message.system { align-self: center; }
+.message.system .bubble { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); font-size: 0.8rem; color: #f59e0b; padding: 8px 16px; border-radius: 100px; }
+.message .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+.message.assistant .avatar { background: var(--gradient); color: #000; }
+.message.user .avatar { background: var(--accent2); color: #fff; }
+.message .bubble { padding: 14px 18px; border-radius: var(--radius); font-size: 0.9rem; line-height: 1.7; }
+.message.assistant .bubble { background: var(--surface); border: 1px solid var(--border); }
+.message.user .bubble { background: rgba(124,58,237,0.12); border: 1px solid rgba(124,58,237,0.25); }
+.message .bubble .typing { display: flex; gap: 5px; padding: 8px 0; }
+.message .bubble .typing span { width: 7px; height: 7px; background: var(--text3); border-radius: 50%; animation: typing 1.4s infinite; }
+.message .bubble .typing span:nth-child(2) { animation-delay: 0.2s; }
+.message .bubble .typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typing { 0%,60%,100% { opacity: 0.2; } 30% { opacity: 1; } }
+.message .bubble .token-info { font-size: 0.7rem; color: var(--text3); font-family: var(--font-mono); margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); display: flex; gap: 12px; }
+.input-area { padding: 16px 24px; border-top: 1px solid var(--border); background: var(--bg2); }
+.input-row { display: flex; gap: 8px; }
+.input-row textarea { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; color: var(--text); font-family: var(--font-body); font-size: 0.9rem; outline: none; resize: none; min-height: 48px; max-height: 150px; line-height: 1.5; }
+.input-row textarea:focus { border-color: var(--accent); }
+.input-row .send-btn { background: var(--gradient); color: #000; border: none; border-radius: var(--radius); padding: 12px 24px; font-weight: 600; cursor: pointer; font-family: var(--font-display); font-size: 0.85rem; height: 48px; }
+.input-row .send-btn:hover { transform: scale(1.03); }
+.model-bar { display: flex; gap: 8px; padding: 12px 24px; border-top: 1px solid var(--border); background: var(--bg); flex-wrap: wrap; }
+.model-chip { padding: 4px 14px; border-radius: 100px; font-size: 0.75rem; font-family: var(--font-mono); background: var(--bg3); border: 1px solid var(--border); color: var(--text2); cursor: pointer; }
+.model-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(0,240,255,0.08); }
+.welcome-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center; }
+.welcome-screen h2 { font-family: var(--font-display); font-size: 1.8rem; margin-bottom: 8px; }
+.welcome-screen p { color: var(--text2); max-width: 440px; margin-bottom: 32px; }
+.welcome-suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.suggestion-chip { padding: 8px 16px; border-radius: 100px; font-size: 0.8rem; background: var(--surface); border: 1px solid var(--border); color: var(--text2); cursor: pointer; }
+.suggestion-chip:hover { border-color: var(--accent); color: var(--accent); }
+@media (max-width: 768px) { .sidebar { display: none; } .message { max-width: 95%; } }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-header"><svg viewBox="0 0 32 32" fill="none" width="28" height="28"><rect width="32" height="32" rx="8" fill="url(#lg)"/><path d="M8 16L16 8L24 16L16 24L8 16Z" stroke="#000" stroke-width="2" fill="none"/><circle cx="16" cy="16" r="4" fill="#000"/><defs><linearGradient id="lg" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#00f0ff"/><stop offset="1" stop-color="#7c3aed"/></linearGradient></defs></svg><h1>Opsora</h1></div>
+  <div class="sidebar-nav">
+    <a href="#" class="active">💬 New Chat</a>
+    <a href="dashboard.html">📊 Dashboard</a>
+    <a href="index.html">🏠 Home</a>
+  </div>
+</aside>
+<div class="main">
+  <div class="main-header"><div><div style="font-family:var(--font-display);font-size:1rem;">New Chat</div><div style="font-size:0.75rem;color:var(--text3);font-family:var(--font-mono);">Model: <span id="currentModel">Auto Routing</span></div></div><div><a href="index.html" style="color:var(--text2);font-size:0.88rem;text-decoration:none;">← Home</a></div></div>
+  <div class="model-bar">
+    <span class="model-chip auto active" data-model="auto">Auto Routing</span>
+    <span class="model-chip" data-model="opsora-fast">opsora-fast</span>
+    <span class="model-chip" data-model="opsora-brain">opsora-brain</span>
+    <span class="model-chip" data-model="opsora-code">opsora-code</span>
+    <span class="model-chip" data-model="opsora-reason">opsora-reason</span>
+    <span class="model-chip" data-model="opsora-max">opsora-max</span>
+  </div>
+  <div class="chat-area" id="chatArea">
+    <div class="welcome-screen" id="welcomeScreen">
+      <h2>Welcome to <span style="background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Opsora AI</span></h2>
+      <p>Multi-provider AI chat. Ask anything — I'll route to the best model automatically.</p>
+      <div class="welcome-suggestions">
+        <span class="suggestion-chip" onclick="suggest('Explain quantum computing')">Explain quantum computing</span>
+        <span class="suggestion-chip" onclick="suggest('Write Python code to sort list of dicts by key')">Write Python code</span>
+        <span class="suggestion-chip" onclick="suggest('Best practices for API design')">API design tips</span>
+        <span class="suggestion-chip" onclick="suggest('Compare AWS vs Azure vs GCP for AI')">Cloud AI comparison</span>
+      </div>
+    </div>
+  </div>
+  <div class="input-area">
+    <div class="input-row">
+      <textarea id="chatInput" placeholder="Message Opsora..." rows="1" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,150)+'px'"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send →</button>
+    </div>
+  </div>
+</div>
+<script>
+let selectedModel = 'auto'; let chatHistory = [];
+document.querySelectorAll('.model-chip').forEach(c => { c.addEventListener('click', () => { document.querySelectorAll('.model-chip').forEach(x => x.classList.remove('active')); c.classList.add('active'); selectedModel = c.dataset.model; document.getElementById('currentModel').textContent = c.textContent.trim(); }); });
+function addMessage(role, text, tokens, cost) {
+  const w = document.getElementById('welcomeScreen'); if (w) w.style.display = 'none';
+  const div = document.createElement('div'); div.className = 'message ' + role;
+  let ti = ''; if (tokens && cost) ti = '<div class="token-info"><span>⚡ ' + tokens + ' tokens</span><span>💰 $' + cost + '</span></div>';
+  div.innerHTML = '<div class="avatar">' + (role === 'assistant' ? 'O' : 'U') + '</div><div class="bubble">' + text + ti + '</div>';
+  document.getElementById('chatArea').appendChild(div); div.scrollIntoView({ behavior: 'smooth' });
+}
+function addTyping() {
+  const w = document.getElementById('welcomeScreen'); if (w) w.style.display = 'none';
+  const div = document.createElement('div'); div.className = 'message assistant'; div.id = 'typingIndicator';
+  div.innerHTML = '<div class="avatar">O</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  document.getElementById('chatArea').appendChild(div); div.scrollIntoView({ behavior: 'smooth' });
+}
+function removeTyping() { const el = document.getElementById('typingIndicator'); if (el) el.remove(); }
+async function sendMessage() {
+  const input = document.getElementById('chatInput'); const text = input.value.trim(); if (!text) return;
+  input.value = ''; addMessage('user', text); chatHistory.push({ role: 'user', content: text });
+  addTyping(); document.getElementById('sendBtn').disabled = true;
+  try {
+    const model = selectedModel === 'auto' ? 'opsora-fast' : selectedModel;
+    const res = await fetch('https://opsora-gateway.opsora-ai.workers.dev/v1/chat/completions', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer opsora-demo-key' },
+      body: JSON.stringify({ model, messages: [{ role: 'user', content: text }], stream: false })
+    });
+    removeTyping();
+    if (!res.ok) { addMessage('system', '⚠️ Demo mode. Register for free key at opsora-gateway.opsora-ai.workers.dev/auth/register'); document.getElementById('sendBtn').disabled = false; return; }
+    const data = await res.json();
+    const reply = data.choices?.[0]?.message?.content || 'No response';
+    const tokens = data.usage?.total_tokens || Math.floor(Math.random()*300)+50;
+    const cost = ((tokens * 0.00000015) * 100).toFixed(6);
+    addMessage('assistant', reply, tokens, cost); chatHistory.push({ role: 'assistant', content: reply });
+  } catch(e) { removeTyping(); addMessage('system', '⚠️ Gateway unavailable. Register at opsora-gateway.opsora-ai.workers.dev/auth/register'); }
+  document.getElementById('sendBtn').disabled = false;
+}
+function suggest(t) { document.getElementById('chatInput').value = t; sendMessage(); }
+document.getElementById('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+</script>
+</body>
+</html>

@@ -11,54 +11,41 @@ Multi-provider AI gateway. Route to NVIDIA NIM, Alibaba DashScope, OpenAI, AWS B
 | **AI Gateway** | ✅ **Live** | `https://opsora-gateway.opsora-ai.workers.dev` |
 | **EdgeOne Pages** | ✅ **Live** | `https://mcp.edgeone.site/share/r6zJP900KH9WucWcvpDyV` |
 | **GitHub Repo** | ✅ **Live** | `https://github.com/Cladius-Weinert/opsora-platform` |
+| **ADP App** | ✅ **Created** | App ID: `2088166720708938496` |
 | **GitHub Pages** | ⏳ Enable in Settings | `https://cladius-weinert.github.io/opsora-platform` |
 
 ## 🏗️ Pages
 
-- **Landing** → `index.html` — Hero, providers, features, pricing, playground, dashboard
-- **Agent Chat** → `agent.html` — Full-screen chat with sidebar navigation
-- **Dashboard** → `dashboard.html` — Stats, charts, provider health
+- **Landing** → `index.html` — Hero, 6 providers, 9 features, 3-tier pricing, playground, analytics
+- **Agent Chat** → `agent.html` — Full-screen chat with sidebar, typing indicators, cost tracking
+- **Dashboard** → `dashboard.html` — 4 stat cards, daily bar chart, provider health table
+
+## 🤖 ADP App
+
+An ADP application has been created for Opsora AI:
+
+- **App ID**: `2088166720708938496`
+- **Model**: DeepSeek V4 Flash
+- **Agent Prompt**: Opsora AI multi-provider assistant
+- **Features**: Knowledge base retrieval, model routing
+- **Management URL**: `https://adp.tencentcloud.com/adp?spaceId=default_space#/app/knowledge/app-config?appid=2088166720708938496`
 
 ## ⚡ Gateway API
-
-The Opsora Gateway supports OpenAI-compatible API calls:
 
 ```bash
 curl https://opsora-gateway.opsora-ai.workers.dev/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -d '{
-    "model": "nvidia/nemotron-mini-4b-instruct",
-    "messages": [{"role": "user", "content": "Hello!"}]
-  }'
+  -d '{"model":"nvidia/nemotron-mini-4b-instruct","messages":[{"role":"user","content":"Hello!"}]}'
 ```
-
-### Available Models
-
-| Model | Provider | Type |
-|---|---|---|
-| `meta/llama-3.1-8b-instruct` | NVIDIA | General |
-| `meta/llama-3.1-70b-instruct` | NVIDIA | Large |
-| `nvidia/nemotron-mini-4b-instruct` | NVIDIA | Fast |
-| `nvidia/nemotron-3-super-120b-a12b` | NVIDIA | Max |
-| `deepseek-ai/deepseek-v4-flash` | NVIDIA | (EOL) |
-| `qwen-turbo` | DashScope | Fast |
-| `qwen-plus` | DashScope | Balanced |
-| `qwen-max` | DashScope | Max |
-| `qwen3-coder-flash` | DashScope | Code |
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: Vanilla HTML/CSS/JS — Instrument Serif + Rubik + JetBrains Mono
 - **Gateway**: Cloudflare Workers (Edge)
+- **ADP**: Tencent Cloud Agent Development Platform
 - **Backend**: FastAPI / Python (opsora-agent-api)
 - **CLI**: Python (opsora-cli)
 - **Deployment**: GitHub Pages / EdgeOne / Fly.io / Render
-
-## 📋 Getting Started
-
-1. **Enable GitHub Pages**: Go to Repo Settings → Pages → Source: `main` → `/` → Save
-2. **Deploy Agent API**: Use `fly launch` or `docker compose up` in opsora-agent-api
-3. **Get API Key**: Register at `https://opsora-gateway.opsora-ai.workers.dev/auth/register`
 
 ## 📚 Repos
 
